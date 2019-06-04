@@ -1,5 +1,5 @@
 === Lordicon Interactive Icons ===
-Contributors: Marcin Baszczewski
+Contributors: baszczewski
 Website URL: https://lordicon.com
 Tags: lordicon, interactive icons, Lottie, Lottie files, bodymovin, animation, 
 Requires at least: 5.0
