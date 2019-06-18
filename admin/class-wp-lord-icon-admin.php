@@ -11,6 +11,22 @@ function checkLottieData($data) {
     return empty(array_diff($neededForSingle, array_keys($data)));
 }
 
+function reArrayFiles(&$file_post) {
+
+    $file_ary = array();
+    $file_count = count($file_post['name']);
+    $file_keys = array_keys($file_post);
+
+    for ($i=0; $i<$file_count; $i++) {
+        foreach ($file_keys as $key) {
+            $file_ary[$i][$key] = $file_post[$key][$i];
+        }
+    }
+
+    return $file_ary;
+}
+
+
 function handle_upload(){
     if(!isset($_FILES['icons'])) {
         return;
@@ -19,28 +35,33 @@ function handle_upload(){
     try {
         $icons = 0;
         $dir = plugin_dir_path( __DIR__ ) . 'icons/';
-        $file = $_FILES['icons'];
-        $text = file_get_contents($file["tmp_name"]);
-        $data = json_decode($text, true);
+        $files = reArrayFiles($_FILES['icons']);
 
-        if (is_array($data)) {
-            if (checkLottieData($data)) {
-                $name = basename($file["name"], '.json');
-                if (strlen($name)) {
-                    $fp = fopen($dir . $name . '.json', 'w');
-                    fwrite($fp, json_encode($data));
-                    fclose($fp);
-                    $icons += 1;
-                }
-            } else  {
-                $iconsNames = array_keys($data);
-                foreach ($iconsNames as $iconName) {
-                    $content = $data[$iconName];
-                    if (checkLottieData($content)) {
-                        $fp = fopen($dir . $iconName . '.json', 'w');
-                        fwrite($fp, json_encode($content));
+        foreach ($files as $file) {
+
+            $text = file_get_contents($file["tmp_name"]);
+            $data = json_decode($text, true);
+
+
+            if (is_array($data)) {
+                if (checkLottieData($data)) {
+                    $name = basename($file["name"], '.json');
+                    if (strlen($name)) {
+                        $fp = fopen($dir . $name . '.json', 'w');
+                        fwrite($fp, json_encode($data));
                         fclose($fp);
                         $icons += 1;
+                    }
+                } else  {
+                    $iconsNames = array_keys($data);
+                    foreach ($iconsNames as $iconName) {
+                        $content = $data[$iconName];
+                        if (checkLottieData($content)) {
+                            $fp = fopen($dir . $iconName . '.json', 'w');
+                            fwrite($fp, json_encode($content));
+                            fclose($fp);
+                            $icons += 1;
+                        }
                     }
                 }
             }
@@ -73,9 +94,8 @@ function settings_page() {
 <?php 
     handle_upload();
 ?>
-        
         <form  method="post" enctype="multipart/form-data">
-            <input type='file' id='icons' name='icons'></input>
+            <input type="file" id="icons" name="icons[]" multiple="multiple" accept=".json"></input>
             <?php submit_button('Upload icons') ?>
         </form>
     </div>
