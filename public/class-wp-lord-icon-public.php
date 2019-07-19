@@ -49,13 +49,12 @@ function lord_icon_render( $attributes, $content = null ) {
     $className = isset($attributes['className']) ? $attributes['className'] : '';
     $palette = isset($attributes['palette']) ? $attributes['palette'] : '';
     $animation = isset($attributes['animation']) ? $attributes['animation'] : '';
-    $resize = isset($attributes['resize']) ? $attributes['resize'] : false;
-    $iconSize = isset($attributes['iconSize']) ? $attributes['iconSize'] : 32;
+    $size = isset($attributes['size']) ? $attributes['size'] : 0;
     $src = plugins_url( '/icons/'.$icon.'.json', dirname( __FILE__ ) );
 
     $style = "";
-    if ($resize) {
-        $style .= 'width:'.$iconSize.'px;height:'.$iconSize.'px;';
+    if ($size) {
+        $style .= 'width:'.(int)$size.'px;height:'.(int)$size.'px;';
     }
 
     $result = '<lord-icon';
@@ -121,7 +120,7 @@ class WP_LordIcon_Public {
 				'palette' => array(
 					'type' => 'string',
 				),
-				'iconSize' => array(
+				'size' => array(
 					'type' => 'number',
 				),
 				'resize' => array(
@@ -136,6 +135,10 @@ class WP_LordIcon_Public {
     }
 
     public function lord_icon_render( $attributes ) {
+        if (!isset($attributes['resize']) || !$attributes['resize']) {
+            unset($attributes['size']);
+        }
+
         return lord_icon_render( $attributes );
     }
 

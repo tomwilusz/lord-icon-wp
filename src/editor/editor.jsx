@@ -22,7 +22,7 @@ const attributes = {
         type: 'boolean',
         default: false,
     },
-    iconSize: {
+    size: {
         type: 'number',
         default: 32,
     },
@@ -169,18 +169,18 @@ registerBlockType('lord-icon/element', {
             setAttributes({ icon: ICONS_OPTIONS[0].value });
         }
 
-        const { iconSize, icon, resize, animation, colorize, palette } = attributes;
+        const { size, icon, resize, animation, colorize, palette } = attributes;
         const currentIconData = (iconData || {})[icon];
         const currentColors = currentIconData ? colors(currentIconData) : [];
 
-        let iconSizeField;
+        let sizeField;
         if (resize) {
-            iconSizeField =
+            sizeField =
                 <RangeControl
                     label={__('Icon size')}
-                    value={iconSize}
+                    value={size}
                     onChange={value =>
-                        setAttributes({ iconSize: value })
+                        setAttributes({ size: value })
                     }
                     min={16}
                     max={512}
@@ -250,7 +250,7 @@ registerBlockType('lord-icon/element', {
                                 setAttributes({ resize: !resize })
                             }
                         />
-                        {iconSizeField}
+                        {sizeField}
                         <ToggleControl
                             label="Colorize"
                             checked={colorize}
