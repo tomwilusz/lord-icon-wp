@@ -10,8 +10,7 @@ const { __ } = i18n;
 const { withSelect, registerStore } = data;
 const { registerBlockType } = blocks;
 const { InspectorControls, ColorPalette } = editor;
-const { Autocomplete, PanelBody, RangeControl, TextControl, ServerSideRender, SelectControl,
-    ToggleControl, Button, Dropdown, BaseControl, ColorPicker, ColorIndicator } = components;
+const { PanelBody, RangeControl, ServerSideRender, ToggleControl, BaseControl, Notice, ClipboardButton, Snackbar } = components;
 
 const attributes = {
     resize: {
@@ -93,6 +92,8 @@ const actions = {
     },
 };
 
+const iconsPalette = {};
+
 const store = registerStore('lord-icon/icons', {
     reducer(state = {}, action) {
         if (action.type == 'SET_ICONS') {
@@ -173,6 +174,10 @@ registerBlockType('lord-icon/element', {
         const currentIconData = (iconData || {})[icon];
         const currentColors = currentIconData ? colors(currentIconData) : [];
 
+        if (!iconsPalette[icon] && currentIconData) {
+            iconsPalette[icon] = [ ...currentColors ];
+        }
+
         let sizeField;
         if (resize) {
             sizeField =
@@ -183,7 +188,7 @@ registerBlockType('lord-icon/element', {
                         setAttributes({ size: value })
                     }
                     min={16}
-                    max={512}
+                    max={2000}
                     beforeIcon="minus"
                     allowReset
                 />;
@@ -199,19 +204,42 @@ registerBlockType('lord-icon/element', {
                 }
             }
 
+            const usedColors = [ ...iconsPalette[icon] ];
+   
+            for (const current of currentColors) {
+                if (!usedColors.includes(current)) {
+                    usedColors.push(current);
+                }
+            }
+
             for (let i = 0; i < currentColors.length; ++i) {
                 const label = `Color ${i + 1}`;
                 const current = currentColors[i];
+               
                 const changeColor = (color) => {
+                    // prevent from unset color
+                    if (!color) {
+                        return;
+                    }
+
                     let newColors = [ ...currentColors ];
                     newColors[i] = color;
                     newColors = newColors.filter(c => c);
 
                     setAttributes({ palette: newColors.length ? newColors.join(';') : '' });
                 }
+
+                const colorsForPalette = usedColors.map(c => {
+                    return {
+                        name: 'Color',
+                        color: c,
+                    };
+                });
+
                 colorizeField.push(
                     <BaseControl label={label}>
                         <ColorPalette
+			                colors={colorsForPalette}
                             value={current}
                             onChange={changeColor}
 
@@ -220,6 +248,31 @@ registerBlockType('lord-icon/element', {
                 );
             }
         }
+
+        const params = [
+            `icon="${icon}"`,
+        ];
+        if (animation) {
+            params.push(`animation="${animation}"`);
+        }
+        if (resize) {
+            params.push(`size="${size}"`);
+        }
+        if (palette) {
+            params.push(`palette="${palette}"`);
+        }
+        const shortcodeHint = `[lord-icon ${params.join(' ')}][/lord-icon]`;
+
+        const showCopiedNotice = () => {
+            wp.data.dispatch( 'core/notices' ).createNotice(
+                'info',
+                __('Shortcode copied to clipboard!', 'block-layouts'),
+                {
+                    isDismissible: true,
+                    type: 'snackbar'
+                }
+            );
+        };
 
         return [
             isSelected && (
@@ -259,6 +312,21 @@ registerBlockType('lord-icon/element', {
                             }
                         />
                         {colorizeField}
+                    </PanelBody>
+
+                    <PanelBody title={__('Shortcode hint')}>
+                        <p>{__('You can use this icon also with shortcode:')}</p>
+                      
+                        <Notice isDismissible={false}>
+                            {shortcodeHint}
+                        </Notice>
+                        <ClipboardButton
+                            isPrimary
+                            text={shortcodeHint}
+                            onCopy={showCopiedNotice}
+                        >
+                        {__('Copy shortcode')}
+                        </ClipboardButton>
                     </PanelBody>
                 </InspectorControls>
             ),
