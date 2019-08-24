@@ -89,7 +89,7 @@ function settings_page() {
             <li>individual .json icons</li>
         </ul>
         <br/>
-        <p>Need more interactive icons? <a target="_blank" href="https://lordicon.com/essencial-pack">Explore entire Lordicon library</a>!</p>
+        <p>Need more interactive icons? <a target="_blank" href="https://lordicon.com/essential-pack">Explore entire Lordicon library</a>!</p>
         <br/>
 <?php 
     handle_upload();
@@ -117,7 +117,7 @@ class WP_LordIcon_Admin {
         $links = array();
 		if ( isset( $plugin_data['AuthorName'] ) && $plugin_data['AuthorName'] == 'Lordicon'  ) {
             $links = array(
-                '<a href="https://lordicon.com/essencial-pack">Get more interactive icons</a>',
+                '<a href="https://lordicon.com/essential-pack">Get more interactive icons</a>',
             );
 		}
         return array_merge( $plugin_links, $links );
