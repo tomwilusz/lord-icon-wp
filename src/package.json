@@ -1,7 +1,7 @@
 {
     "name": "lordicon-element",
     "private": true,
-    "version": "1.4.3",
+    "version": "1.4.4",
     "license": "UNLICENSED",
     "devDependencies": {
         "babel-core": "^6.25.0",
@@ -48,6 +48,6 @@
         "node": ">=8.9.4"
     },
     "dependencies": {
-        "lord-icon-element": "^1.1.1"
+        "lord-icon-element": "^1.1.4"
     }
 }
