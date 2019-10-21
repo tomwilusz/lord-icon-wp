@@ -5,7 +5,7 @@ Tags: lordicon, interactive icons, Lottie, Lottie files, bodymovin, animation, s
 Requires at least: 5.0
 Tested up to: 5.2.1
 Requires PHP: 7.0.0
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 Plug-in License: MIT or later
 
 == Description ==
