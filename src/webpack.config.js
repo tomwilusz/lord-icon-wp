@@ -1,6 +1,6 @@
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = {
@@ -52,10 +52,7 @@ module.exports = {
     ],
     optimization: {
         minimizer: [
-            new UglifyJSPlugin({
-                extractComments: true,
-                sourceMap: false,
-            }),
+            new TerserPlugin(),
             new OptimizeCSSAssetsPlugin({}),
         ]
     }
