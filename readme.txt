@@ -1,11 +1,11 @@
 === Lordicon Interactive Icons ===
 Contributors: baszczewski
 Website URL: https://lordicon.com
-Tags: lordicon, interactive icons, Lottie, Lottie files, bodymovin, animation, svg animation,
+Tags: lordicon, interactive icons, Lottie, Lottie files, bodymovin, animation, svg animation
 Requires at least: 5.0
 Tested up to: 5.2.1
 Requires PHP: 7.0.0
-Stable tag: 1.4.6
+Stable tag: 1.4.7
 Plug-in License: MIT or later
 
 == Description ==
