@@ -3,7 +3,7 @@
 * Plugin Name: Lordicon Interactive Icons
 * Plugin URI: https://lordicon.com/wordpress-plugin
 * Description: Insert and customize interactive, animated icons (Lottie, Bodymovin, json). Installing this plugin you are automatically given a free pack our 50 essential icons. Do you want more? Explore Lordicon’s animated icons library. You can also add your own Lottie files.
-* Version: 1.4.7
+* Version: 1.6.0
 * Author: Lordicon
 * Author URI: https://lordicon.com/
 **/
