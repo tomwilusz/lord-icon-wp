@@ -16,7 +16,7 @@
         "fs-extra": "^7.0.1",
         "js-yaml": "^3.13.0",
         "klaw-sync": "^6.0.0",
-        "lodash": "^4.17.15",
+        "lodash": "^4.17.21",
         "lottie-web": "^5.6.6",
         "mini-css-extract-plugin": "^0.5.0",
         "optimize-css-assets-webpack-plugin": "^5.0.3",
