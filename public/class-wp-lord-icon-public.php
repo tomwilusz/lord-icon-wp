@@ -6,22 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function icon_lists() {
-    $dir = plugin_dir_path( __DIR__ ) . 'icons/';
-    $icons = array();
-
-    $dircontents = scandir($dir);
-	
-	foreach ($dircontents as $file) {
-		$extension = pathinfo($file, PATHINFO_EXTENSION);
-		if ($extension == 'json') {
-            $icons[] = pathinfo($file, PATHINFO_FILENAME);
-		}
-	}
-
-    return $icons;
-}
-
 function icon_exists($icon) {
     if (strlen($icon) == 0) {
         return false;
@@ -35,42 +19,62 @@ function icon_exists($icon) {
     return true;
 }
 
+function icon_path($icon) {
+    $dir = plugin_dir_path( __DIR__ ) . 'icons/';
+    return $dir.$icon.'.json';
+}
+
 function lord_icon_render( $attributes, $content = null ) {
     $icon = isset($attributes['icon']) ? $attributes['icon'] : '';
-
-    if (strlen($icon) == 0) {
-        return '';
-    }
-
-    if (!icon_exists($icon)) {
-        return 'Invalid icon.';
-    }
-
+    $src = isset($attributes['src']) ? $attributes['src'] : '';
     $className = isset($attributes['className']) ? $attributes['className'] : '';
-    $palette = isset($attributes['palette']) ? $attributes['palette'] : '';
-    $animation = isset($attributes['animation']) ? $attributes['animation'] : '';
+    $colors = isset($attributes['colors']) ? $attributes['colors'] : '';
+    $trigger = isset($attributes['trigger']) ? $attributes['trigger'] : '';
     $size = isset($attributes['size']) ? $attributes['size'] : 0;
-    $src = plugins_url( '/icons/'.$icon.'.json', dirname( __FILE__ ) );
-
+    $stroke = isset($attributes['stroke']) ? $attributes['stroke'] : 0;
+    $delay = isset($attributes['delay']) ? $attributes['delay'] : 0;
+ 
     $style = "";
     if ($size) {
         $style .= 'width:'.(int)$size.'px;height:'.(int)$size.'px;';
     }
 
     $result = '<lord-icon';
-    $result .= ' src="'.$src.'"';
+    
+    if (strlen($src)) {        
+        $result .= ' src="'.$src.'"';
+    } else { 
+        if (!strlen($icon) or !icon_exists($icon)) {
+            $icon = 'placeholder';
+        }
+        $src = plugins_url( '/icons/'.$icon.'.json', dirname( __FILE__ ) );
+        $result .= ' src="'.$src.'"';
+    }
+    
+    if (strlen($trigger) && $trigger !== 'none') {
+        $result .= ' trigger="'.$trigger.'"';
+    }
+    
+    if ($stroke) {
+        $result .= ' stroke="'.$stroke.'"';
+    }
+
+    if (strlen($colors)) {
+        $result .= ' colors="'.$colors.'"';
+    }
+    
     if (strlen($style)) {
         $result .= ' style="'.$style.'"';
     }
-    if (strlen($animation) && $animation !== 'none') {
-        $result .= ' animation="'.$animation.'"';
-    }
-    if (strlen($palette)) {
-        $result .= ' palette="'.$palette.'"';
-    }
+    
     if (strlen($className)) {
         $result .= ' class="'.$className.'"';
     }
+    
+    if ($delay && ($trigger == 'loop' || $trigger == 'loop-on-hover')) {
+        $result .= ' delay="'.$delay.'"';
+    }
+
     $result .= '>';
     
     if ($content) {
@@ -111,13 +115,16 @@ class WP_LordIcon_Public {
 				'className' => array(
 					'type' => 'string',
 				),
-				'animation' => array(
+				'trigger' => array(
 					'type' => 'string',
 				),
 				'icon' => array(
 					'type' => 'string',
 				),
-				'palette' => array(
+				'src' => array(
+					'type' => 'string',
+				),
+				'colors' => array(
 					'type' => 'string',
 				),
 				'size' => array(
@@ -125,6 +132,15 @@ class WP_LordIcon_Public {
 				),
 				'resize' => array(
 					'type' => 'boolean',
+				),
+                'stroke' => array(
+					'type' => 'number',
+				),
+				'restroke' => array(
+					'type' => 'boolean',
+				),
+                'delay' => array(
+					'type' => 'number',
 				),
 				'colorize' => array(
 					'type' => 'boolean',
@@ -138,7 +154,9 @@ class WP_LordIcon_Public {
         if (!isset($attributes['resize']) || !$attributes['resize']) {
             unset($attributes['size']);
         }
-
+        if (!isset($attributes['restroke']) || !$attributes['restroke']) {
+            unset($attributes['stroke']);
+        }
         return lord_icon_render( $attributes );
     }
 
@@ -152,14 +170,6 @@ class WP_LordIcon_Public {
     public function register_rest() {
         register_rest_route(
 			'lord-icon',
-			'/icons',
-			array(
-				'methods'   => 'GET',
-				'callback'  => array( $this, 'get_icons' ),
-			)
-		);
-        register_rest_route(
-			'lord-icon',
 			'/icon-data',
 			array(
 				'methods'   => 'GET',
@@ -167,18 +177,18 @@ class WP_LordIcon_Public {
 			)
 		);
     }
-
-    public function get_icons() {
-        return icon_lists();
-    }
     
     public function get_icon_data() {
-        $icon = $_GET['icon'];
-        if (!strlen($icon) || !icon_exists($icon)) {
+        $icon = 'placeholder';
+        
+        if (isset($_GET['icon'])) {
+            $icon = $_GET['icon'];
+        }
+        
+        if (icon_exists($icon)) {
+            return json_decode(file_get_contents(icon_path($icon)));
+        } else {
             return false;
         }
-
-        $dir = plugin_dir_path( __DIR__ ) . 'icons/';
-        return json_decode(file_get_contents($dir . $icon . '.json'));
     }
 }

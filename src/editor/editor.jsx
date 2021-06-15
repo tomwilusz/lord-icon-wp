@@ -1,19 +1,28 @@
 require('./style.css');
 
 import { ICON } from './icon';
-import Select from 'react-select';
-import { colors } from 'lord-icon-element';
+import { colors as allColors, deepClone } from './lottie';
 
-const { data, apiFetch, i18n, blocks, components, editor } = wp;
+const { data, apiFetch, i18n, blocks, blockEditor, components, serverSideRender: ServerSideRender } = wp;
 
 const { __ } = i18n;
 const { withSelect, registerStore } = data;
 const { registerBlockType } = blocks;
-const { InspectorControls, ColorPalette } = editor;
-const { PanelBody, RangeControl, ServerSideRender, ToggleControl, BaseControl, Notice, ClipboardButton, Snackbar } = components;
+const { InspectorControls,  } = blockEditor;
+const { PanelBody, RangeControl, ColorPalette, CardDivider, ToggleControl, BaseControl, CustomSelectControl, ClipboardButton, Button, Card, CardBody, TextControl } = components;
 
-const attributes = {
+console.log('components', components);
+
+const ICONS_PALETTE = {};
+
+const PLACEHOLDER_DATA_INDEX = Symbol("Placeholder");
+
+const SUPPORTED_ATTRIBUTES = {
     resize: {
+        type: 'boolean',
+        default: false,
+    },
+    restroke: {
         type: 'boolean',
         default: false,
     },
@@ -25,87 +34,84 @@ const attributes = {
         type: 'number',
         default: 32,
     },
+    stroke: {
+        type: 'number',
+        default: 50,
+    },
+    delay: {
+        type: 'number',
+        default: 0,
+    },
     icon: {
         type: 'string',
         default: '',
     },
-    animation: {
+    src: {
         type: 'string',
         default: '',
     },
-    palette: {
+    trigger: {
+        type: 'string',
+        default: 'none',
+    },
+    colors: {
         type: 'string',
         default: '',
     },
 };
 
-let ANIMATION_OPTIONS = [
-    { label: 'None', value: 'none' },
-    { label: 'Hover', value: 'hover' },
-    { label: 'Click', value: 'click' },
-    { label: 'Morph', value: 'morph' },
-    { label: 'Morph two way', value: 'morph-two-way' },
-    { label: 'Loop', value: 'loop' },
-    { label: 'Auto', value: 'auto' },
+let TRIGGER_OPTIONS = [
+    { name: 'None', key: 'none' },
+    { name: 'Click', key: 'click' },
+    { name: 'Hover', key: 'hover' },
+    { name: 'Loop', key: 'loop' },
+    { name: 'Loop on hover', key: 'loop-on-hover' },
+    { name: 'Morph', key: 'morph' },
+    { name: 'Morph two way', key: 'morph-two-way' },
 ];
 
-function findOption(options, value) {
+function findOption(options, key) {
     for (const current of options) {
-        if (current.value === value) {
+        if (current.key === key) {
             return current;
         }
     }
 }
 
-function createOptions(values) {
-    return (values || []).map(c => {
-        return  { value: c, label: c };
-    });
+async function fetchIconData(src) {
+    const response = await fetch(src);
+    return await response.json();
 }
 
 const actions = {
-    setIcons(icons) {
-        return {
-            type: 'SET_ICONS',
-            icons,
-        };
-    },
-    receiveIcons(path) {
-        return {
-            type: 'RECEIVE_ICONS',
-            path,
-        };
-    },
-    setIconData(iconData, icon) {
+    setIconData(iconData, src, icon) {
         return {
             type: 'SET_ICON_DATA',
             iconData,
+            src,
             icon,
         };
     },
-    receiveIconData(path, icon) {
+    receiveIconData(path, src, icon) {
         return {
             type: 'RECEIVE_ICON_DATA',
             path,
+            src,
             icon,
         };
     },
 };
 
-const iconsPalette = {};
-
-const store = registerStore('lord-icon/icons', {
+const store = registerStore('lord-icon', {
     reducer(state = {}, action) {
-        if (action.type == 'SET_ICONS') {
-            const newState = Object.assign({}, state);
-            newState.icons = action.icons;
-            return newState;
-        } else if  (action.type == 'SET_ICON_DATA') {
+        if  (action.type == 'SET_ICON_DATA') {
             const newState = Object.assign({}, state);
             if (!newState.iconData) {
                 newState.iconData = {};
             }
-            newState.iconData[action.icon] = action.iconData;
+            
+            newState.iconData[action.src || action.icon || PLACEHOLDER_DATA_INDEX] = action.iconData;
+            
             return newState;
         }
 
@@ -115,10 +121,6 @@ const store = registerStore('lord-icon/icons', {
     actions,
 
     selectors: {
-        receiveIcons(state) {
-            const { icons } = state;
-            return icons;
-        },
         receiveIconData(state) {
             const { iconData } = state;
             return iconData;
@@ -126,63 +128,70 @@ const store = registerStore('lord-icon/icons', {
     },
 
     controls: {
-        RECEIVE_ICONS(action) {
-            return apiFetch({ path: action.path });
-        },
         RECEIVE_ICON_DATA(action) {
-            return apiFetch({
-                path: action.path + `?icon=${action.icon || ''}`,
-            });
+            if (action.src) {
+                return fetchIconData(action.src);
+            } else {
+                const extraParams = (action && action.icon) ? (`?icon=${action.icon || ''}`) : '';
+            
+                return apiFetch({
+                    path: action.path + extraParams,
+                });
+            }
         },
     },
 
     resolvers: {
-        * receiveIcons(state) {
-            const icons = yield actions.receiveIcons('/lord-icon/icons');
-            return actions.setIcons(icons);
-        },
-        * receiveIconData(icon) {
-            const iconData = yield actions.receiveIconData('/lord-icon/icon-data', icon);
-            return actions.setIconData(iconData, icon);
+        * receiveIconData(src, icon) {
+            const iconData = yield actions.receiveIconData('/lord-icon/icon-data', src, icon);
+            return actions.setIconData(iconData, src, icon);
         },
     },
 });
 
-
 registerBlockType('lord-icon/element', {
-    title: 'Lordicon Element',
+    title: __('Lordicon Element'),
     icon: ICON,
     category: 'lordicon',
     keywords: [__('Icon'), __('LordIcon')],
-    attributes,
+    attributes: SUPPORTED_ATTRIBUTES,
     edit: withSelect( ( select, prop ) => {
         return {
-            icons: select('lord-icon/icons').receiveIcons(),
-            iconData: select('lord-icon/icons').receiveIconData(prop.attributes.icon),
+            iconData: select('lord-icon').receiveIconData(prop.attributes.src, prop.attributes.icon),
         };
-    })(function ({ isSelected, setAttributes, className, attributes, icons, iconData }) {
-        const ICONS_OPTIONS = createOptions(icons);
+    })(function ({ isSelected, setAttributes, className, attributes, iconData }) {
+        const { size, icon, src, resize, stroke, restroke, trigger, colorize, colors, delay } = attributes;
+        
+        let currentIconData = null;
+        if (iconData) {
+            if (!src && !icon) {
+                currentIconData = iconData[PLACEHOLDER_DATA_INDEX];
+            } else {
+                currentIconData = iconData[icon || src] || null;
+            }
 
-        if (!attributes.animation) {
-            attributes.animation = 'auto';
+            if (currentIconData) {
+                const currentColors = allColors(currentIconData);
+                
+                if (!src && !icon) {
+                    ICONS_PALETTE[PLACEHOLDER_DATA_INDEX] = deepClone(currentColors);
+                } else {
+                    ICONS_PALETTE[icon || src] = deepClone(currentColors);
+                }
+            }
         }
-        if (!attributes.icon && ICONS_OPTIONS.length) {
-            setAttributes({ icon: ICONS_OPTIONS[0].value });
+
+        let currentColors = [];
+        if (!src && !icon) {
+            currentColors = ICONS_PALETTE[PLACEHOLDER_DATA_INDEX] || [];
+        } else {
+            currentColors = ICONS_PALETTE[icon || src] || [];
         }
-
-        const { size, icon, resize, animation, colorize, palette } = attributes;
-        const currentIconData = (iconData || {})[icon];
-        const currentColors = currentIconData ? colors(currentIconData) : [];
-
-        if (!iconsPalette[icon] && currentIconData) {
-            iconsPalette[icon] = [ ...currentColors ];
-        }
-
+            
         let sizeField;
         if (resize) {
             sizeField =
                 <RangeControl
-                    label={__('Icon size')}
                     value={size}
                     onChange={value =>
                         setAttributes({ size: value })
@@ -194,53 +203,84 @@ registerBlockType('lord-icon/element', {
                 />;
         }
 
+        let strokeField;
+        if (restroke) {
+            strokeField =
+                <RangeControl
+                    value={stroke}
+                    onChange={value =>
+                        setAttributes({ stroke: value })
+                    }
+                    min={0}
+                    max={100}
+                    beforeIcon="minus"
+                    allowReset
+                />;
+        }
 
+        let delayField;
+        if (trigger == 'loop' || trigger == 'loop-on-hover') {
+            delayField = <TextControl
+                label={__('Delay')}
+                type="number"
+                value={ delay }
+                onChange={ ( delay ) =>  setAttributes({ delay: Math.max(0, delay) }) }
+            />;
+        }
+        
         let colorizeField = [];
         if (colorize && currentColors.length) {
-            const currentPalette = (palette || '').split(';');
-            if (currentPalette.length === currentColors.length) {
-                for (let i = 0; i < currentPalette.length; ++i) {
-                    currentColors[i] = currentPalette[i];
-                }
-            }
+            const usedColors = currentColors.map(c => c.color);
 
-            const usedColors = [ ...iconsPalette[icon] ];
-   
-            for (const current of currentColors) {
-                if (!usedColors.includes(current)) {
-                    usedColors.push(current);
+            const paletteColors = currentColors.map(c => {
+                return {
+                    name: __('Original'),
+                    color: c.color,
+                };
+            });
+
+            const colorsAfterChange = (colors || '').split(',').filter(Boolean).map(c => {
+                const [ name, color ] = c.split(':');
+                return { name, color };
+            });
+            for (const ca of colorsAfterChange) {
+                if (usedColors.includes(ca.color)) {
+                    continue;
                 }
+                paletteColors.push({
+                    name: __('Custom'),
+                    color: ca.color,
+                });
+                usedColors.push(ca.color);
             }
 
             for (let i = 0; i < currentColors.length; ++i) {
-                const label = `Color ${i + 1}`;
                 const current = currentColors[i];
-               
+                const label = current.name;
+
                 const changeColor = (color) => {
                     // prevent from unset color
                     if (!color) {
                         return;
                     }
 
-                    let newColors = [ ...currentColors ];
-                    newColors[i] = color;
-                    newColors = newColors.filter(c => c);
+                    const newColors = colorsAfterChange.length ? colorsAfterChange : deepClone(currentColors);
+                    for (const cc of newColors) {
+                        if (cc.name.toLowerCase() == current.name.toLowerCase()) {
+                            cc.color = color;
+                        }
+                    }
 
-                    setAttributes({ palette: newColors.length ? newColors.join(';') : '' });
+                    setAttributes({ colors: newColors.length ? newColors.map(c => `${c.name.toLowerCase()}:${c.color}`).join(',') : '' });
                 }
 
-                const colorsForPalette = usedColors.map(c => {
-                    return {
-                        name: 'Color',
-                        color: c,
-                    };
-                });
+                const currentValue = colorsAfterChange.length ? colorsAfterChange[i].color : current.color;
 
                 colorizeField.push(
                     <BaseControl label={label}>
                         <ColorPalette
-			                colors={colorsForPalette}
-                            value={current}
+			                colors={paletteColors}
+                            value={currentValue}
                             onChange={changeColor}
 
                         />
@@ -249,18 +289,32 @@ registerBlockType('lord-icon/element', {
             }
         }
 
-        const params = [
-            `icon="${icon}"`,
-        ];
-        if (animation) {
-            params.push(`animation="${animation}"`);
+        const params = [];
+
+        if (src) {
+            params.push(`src="${src}"`);
         }
+
+        if (trigger && trigger != 'none') {
+            params.push(`trigger="${trigger}"`);
+        }
+
         if (resize) {
             params.push(`size="${size}"`);
+        } 
+
+        if (restroke) {
+            params.push(`stroke="${stroke}"`);
         }
-        if (palette) {
-            params.push(`palette="${palette}"`);
+
+        if (colors) {
+            params.push(`colors="${colors}"`);
         }
+
+        if (delay && (trigger === 'loop' || trigger == 'loop-on-hover')) {
+            params.push(`delay="${delay}"`);
+        }
+
         const shortcodeHint = `[lord-icon ${params.join(' ')}][/lord-icon]`;
 
         const showCopiedNotice = () => {
@@ -270,34 +324,52 @@ registerBlockType('lord-icon/element', {
                 {
                     isDismissible: true,
                     type: 'snackbar'
-                }
+                },
             );
         };
 
+        const showMultimediaPopup = () => {
+            const wpMedia = wp.media({ 
+                title: __('Upload or select icon'),
+                multiple: false,
+                library: {
+                    type: [ 'text/plain' ]
+                },
+            }).open().on('select', (e) => {
+                const uploaded_image = wpMedia.state().get('selection').first();
+                const fileURL = uploaded_image.toJSON().url;
+
+                setAttributes( { src: fileURL, colors: '', colorize: false } )
+            });
+        }
         return [
             isSelected && (
                 <InspectorControls key="inspectors">
-                    <PanelBody title={__('Icon Settings')}>
-                        <BaseControl label="Icon">
-                            <Select
-                                value={findOption(ICONS_OPTIONS, icon)}
-                                onChange={data =>
-                                    setAttributes({ icon: data.value, palette: '', colorize: false })
-                                }
-                                options={ICONS_OPTIONS}
+                    <PanelBody title={__('Icon')}>
+                        <TextControl
+                            label={__('URL')}
+                            value={ src }
+                            onChange={ ( fileURL ) => setAttributes( { src: fileURL, colors: '', colorize: false } ) }
+                        />
+    
+                        <Button isPrimary onClick={showMultimediaPopup}>{__('Select icon')}</Button>
+                    </PanelBody>
+
+                    <PanelBody title={__('Editor')}>
+                        <BaseControl label={__('Trigger')}>
+                            <CustomSelectControl
+                                options={ TRIGGER_OPTIONS }
+                                value={findOption(TRIGGER_OPTIONS, trigger)}
+                                onChange={ ( { selectedItem } ) =>  setAttributes({ delay: 0, trigger: selectedItem.key }) }
                             />
                         </BaseControl>
-                        <BaseControl label="Animation">
-                            <Select
-                                value={findOption(ANIMATION_OPTIONS, animation)}
-                                onChange={data =>
-                                    setAttributes({ animation: data.value })
-                                }
-                                options={ANIMATION_OPTIONS}
-                            />
-                        </BaseControl>
+                        
+                        {delayField}
+
+                        <CardDivider />
+                        
                         <ToggleControl
-                            label="Resize icon"
+                            label={__('Size')}
                             checked={resize}
                             onChange={() =>
                                 setAttributes({ resize: !resize })
@@ -305,23 +377,36 @@ registerBlockType('lord-icon/element', {
                         />
                         {sizeField}
                         <ToggleControl
-                            label="Colorize"
+                            label={__('Stroke')}
+                            checked={restroke}
+                            onChange={() =>
+                                setAttributes({ restroke: !restroke })
+                            }
+                        />
+                        {strokeField}
+                        <ToggleControl
+                            label={__('Colors')}
                             checked={colorize}
                             onChange={() =>
-                                setAttributes({ colorize: !colorize, palette: '' })
+                                setAttributes({ colorize: !colorize, colors: '' })
                             }
                         />
                         {colorizeField}
                     </PanelBody>
 
-                    <PanelBody title={__('Shortcode hint')}>
-                        <p>{__('You can use this icon also with shortcode:')}</p>
+                    <PanelBody title={__('Shortcode')} initialOpen={ false }>
+                        <p>{__('You can use this icon with shortcode as well:')}</p>
                       
-                        <Notice isDismissible={false}>
-                            {shortcodeHint}
-                        </Notice>
+                        <Card>
+                            <CardBody>
+                                <small>{shortcodeHint}</small>
+                             </CardBody>
+                        </Card>
+                        <br/>
+
                         <ClipboardButton
                             isPrimary
+                            variant="primary"
                             text={shortcodeHint}
                             onCopy={showCopiedNotice}
                         >

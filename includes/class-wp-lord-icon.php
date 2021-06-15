@@ -30,7 +30,6 @@ class WP_LordIcon {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $plugin_admin, 'enqueue_block_editor_assets' );
-		$this->loader->add_action( 'admin_menu', $plugin_admin, 'admin_menu' );
 	}
 
     private function define_public_hooks() {

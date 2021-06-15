@@ -2,10 +2,10 @@
 Contributors: baszczewski
 Website URL: https://lordicon.com
 Tags: lordicon, interactive icons, Lottie, Lottie files, bodymovin, animation, svg animation
-Requires at least: 5.0
-Tested up to: 5.2.1
+Requires at least: 5.7
+Tested up to: 5.7.2
 Requires PHP: 7.0.0
-Stable tag: 1.6.0
+Stable tag: 2.0.0
 Plug-in License: MIT or later
 
 == Description ==

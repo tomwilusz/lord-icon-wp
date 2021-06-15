@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class WP_LordIcon_Constants {
-    const PLUGIN_VERSION = '1.0.0';
+    const PLUGIN_VERSION = '2.0.0';
 	const PLUGIN_NAME = 'lord-icon';
 	const PLUGIN_BASENAME = 'lord-icon-wp/lord-icon-wp.php';
 
