@@ -8,7 +8,7 @@ const { data, apiFetch, i18n, blocks, blockEditor, components, serverSideRender:
 const { __ } = i18n;
 const { withSelect, registerStore } = data;
 const { registerBlockType } = blocks;
-const { InspectorControls,  } = blockEditor;
+const { InspectorControls, } = blockEditor;
 const { PanelBody, RangeControl, ColorPalette, CardDivider, ToggleControl, BaseControl, CustomSelectControl, ClipboardButton, Button, Card, CardBody, TextControl } = components;
 
 console.log('components', components);
@@ -104,14 +104,14 @@ const actions = {
 
 const store = registerStore('lord-icon', {
     reducer(state = {}, action) {
-        if  (action.type == 'SET_ICON_DATA') {
+        if (action.type == 'SET_ICON_DATA') {
             const newState = Object.assign({}, state);
             if (!newState.iconData) {
                 newState.iconData = {};
             }
-            
+
             newState.iconData[action.src || action.icon || PLACEHOLDER_DATA_INDEX] = action.iconData;
-            
+
             return newState;
         }
 
@@ -133,7 +133,7 @@ const store = registerStore('lord-icon', {
                 return fetchIconData(action.src);
             } else {
                 const extraParams = (action && action.icon) ? (`?icon=${action.icon || ''}`) : '';
-            
+
                 return apiFetch({
                     path: action.path + extraParams,
                 });
@@ -155,13 +155,13 @@ registerBlockType('lord-icon/element', {
     category: 'lordicon',
     keywords: [__('Icon'), __('LordIcon')],
     attributes: SUPPORTED_ATTRIBUTES,
-    edit: withSelect( ( select, prop ) => {
+    edit: withSelect((select, prop) => {
         return {
             iconData: select('lord-icon').receiveIconData(prop.attributes.src, prop.attributes.icon),
         };
     })(function ({ isSelected, setAttributes, className, attributes, iconData }) {
         const { size, icon, src, resize, stroke, restroke, trigger, colorize, colors, delay } = attributes;
-        
+
         let currentIconData = null;
         if (iconData) {
             if (!src && !icon) {
@@ -172,7 +172,7 @@ registerBlockType('lord-icon/element', {
 
             if (currentIconData) {
                 const currentColors = allColors(currentIconData);
-                
+
                 if (!src && !icon) {
                     ICONS_PALETTE[PLACEHOLDER_DATA_INDEX] = deepClone(currentColors);
                 } else {
@@ -187,7 +187,7 @@ registerBlockType('lord-icon/element', {
         } else {
             currentColors = ICONS_PALETTE[icon || src] || [];
         }
-            
+
         let sizeField;
         if (resize) {
             sizeField =
@@ -221,13 +221,13 @@ registerBlockType('lord-icon/element', {
         let delayField;
         if (trigger == 'loop' || trigger == 'loop-on-hover') {
             delayField = <TextControl
-                label={__('Delay')}
+                label={__('Delay (ms)')}
                 type="number"
-                value={ delay }
-                onChange={ ( delay ) =>  setAttributes({ delay: Math.max(0, delay) }) }
+                value={delay}
+                onChange={(delay) => setAttributes({ delay: Math.max(0, delay) })}
             />;
         }
-        
+
         let colorizeField = [];
         if (colorize && currentColors.length) {
             const usedColors = currentColors.map(c => c.color);
@@ -240,7 +240,7 @@ registerBlockType('lord-icon/element', {
             });
 
             const colorsAfterChange = (colors || '').split(',').filter(Boolean).map(c => {
-                const [ name, color ] = c.split(':');
+                const [name, color] = c.split(':');
                 return { name, color };
             });
             for (const ca of colorsAfterChange) {
@@ -279,7 +279,7 @@ registerBlockType('lord-icon/element', {
                 colorizeField.push(
                     <BaseControl label={label}>
                         <ColorPalette
-			                colors={paletteColors}
+                            colors={paletteColors}
                             value={currentValue}
                             onChange={changeColor}
 
@@ -301,7 +301,7 @@ registerBlockType('lord-icon/element', {
 
         if (resize) {
             params.push(`size="${size}"`);
-        } 
+        }
 
         if (restroke) {
             params.push(`stroke="${stroke}"`);
@@ -318,7 +318,7 @@ registerBlockType('lord-icon/element', {
         const shortcodeHint = `[lord-icon ${params.join(' ')}][/lord-icon]`;
 
         const showCopiedNotice = () => {
-            wp.data.dispatch( 'core/notices' ).createNotice(
+            wp.data.dispatch('core/notices').createNotice(
                 'info',
                 __('Shortcode copied to clipboard!', 'block-layouts'),
                 {
@@ -329,17 +329,17 @@ registerBlockType('lord-icon/element', {
         };
 
         const showMultimediaPopup = () => {
-            const wpMedia = wp.media({ 
+            const wpMedia = wp.media({
                 title: __('Upload or select icon'),
                 multiple: false,
                 library: {
-                    type: [ 'text/plain' ]
+                    type: ['text/plain']
                 },
             }).open().on('select', (e) => {
                 const uploaded_image = wpMedia.state().get('selection').first();
                 const fileURL = uploaded_image.toJSON().url;
 
-                setAttributes( { src: fileURL, colors: '', colorize: false } )
+                setAttributes({ src: fileURL, colors: '', colorize: false })
             });
         }
         return [
@@ -348,26 +348,26 @@ registerBlockType('lord-icon/element', {
                     <PanelBody title={__('Icon')}>
                         <TextControl
                             label={__('URL')}
-                            value={ src }
-                            onChange={ ( fileURL ) => setAttributes( { src: fileURL, colors: '', colorize: false } ) }
+                            value={src}
+                            onChange={(fileURL) => setAttributes({ src: fileURL, colors: '', colorize: false })}
                         />
-    
+
                         <Button isPrimary onClick={showMultimediaPopup}>{__('Select icon')}</Button>
                     </PanelBody>
 
                     <PanelBody title={__('Editor')}>
                         <BaseControl label={__('Trigger')}>
                             <CustomSelectControl
-                                options={ TRIGGER_OPTIONS }
+                                options={TRIGGER_OPTIONS}
                                 value={findOption(TRIGGER_OPTIONS, trigger)}
-                                onChange={ ( { selectedItem } ) =>  setAttributes({ delay: 0, trigger: selectedItem.key }) }
+                                onChange={({ selectedItem }) => setAttributes({ delay: 0, trigger: selectedItem.key })}
                             />
                         </BaseControl>
-                        
+
                         {delayField}
 
                         <CardDivider />
-                        
+
                         <ToggleControl
                             label={__('Size')}
                             checked={resize}
@@ -394,15 +394,15 @@ registerBlockType('lord-icon/element', {
                         {colorizeField}
                     </PanelBody>
 
-                    <PanelBody title={__('Shortcode')} initialOpen={ false }>
+                    <PanelBody title={__('Shortcode')} initialOpen={false}>
                         <p>{__('You can use this icon with shortcode as well:')}</p>
-                      
+
                         <Card>
                             <CardBody>
                                 <small>{shortcodeHint}</small>
-                             </CardBody>
+                            </CardBody>
                         </Card>
-                        <br/>
+                        <br />
 
                         <ClipboardButton
                             isPrimary
@@ -410,7 +410,7 @@ registerBlockType('lord-icon/element', {
                             text={shortcodeHint}
                             onCopy={showCopiedNotice}
                         >
-                        {__('Copy shortcode')}
+                            {__('Copy shortcode')}
                         </ClipboardButton>
                     </PanelBody>
                 </InspectorControls>
