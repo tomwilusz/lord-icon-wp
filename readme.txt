@@ -5,10 +5,13 @@ Tags: lordicon, animated icons, Lottie, Lottie files, bodymovin, animation, svg 
 Requires at least: 5.7
 Tested up to: 5.7.2
 Requires PHP: 7.0.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 Plug-in License: MIT or later
 
 == Description ==
+
+**IMPORTANT**: If you update the plugin from 1.X version to 2.X version, it will automatically break all previously embedded icons added with older versions of the Lordicon WordPress plugin. You will need to add them one more time.
+
 Insert and customize interactive animated graphics (Lottie - .json) using a simple to use Lordicon plugin supported by the Gutenberg editor.
 
 It is essential to note that it doesn't mean that the Gutenberg post is the only place to use the plugin. We provide a shortcode option that lets you **embed those icons directly to web builders such as Divi, Elementor, or custom themes.**
