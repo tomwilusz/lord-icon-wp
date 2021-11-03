@@ -30,7 +30,7 @@
         "react-dom": "^16.14.0",
         "terser-webpack-plugin": "^2.3.8",
         "to-string-loader": "^1.1.6",
-        "validator": "^10.11.0",
+        "validator": "^13.7.0",
         "webpack": "^4.46.0",
         "webpack-bundle-analyzer": "^3.9.0",
         "webpack-cleanup-plugin": "^0.5.1",
